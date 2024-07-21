@@ -103,6 +103,10 @@ export class FlashSwapUniswapV2Bot {
     return new Contract(pairAddr, IUniswapV2Router02.abi, this._provider);
   }
 
+  getPairContracts() {
+    return this.forwardPath.map((path) => path.dex.pairContract);
+  }
+
   async calculateForwardPath() {
     console.log();
     console.log("Estimating FORWARD path profitability...");
@@ -154,11 +158,6 @@ export class FlashSwapUniswapV2Bot {
         .minus(amountIn.toString())
         .toString(),
     };
-  }
-
-  async estimateProfitability(amountDiff: string) {
-    if (Big(amountDiff).gt(0)) return true;
-    return false;
   }
 
   async calculateBackwardPath() {
@@ -213,6 +212,29 @@ export class FlashSwapUniswapV2Bot {
         .minus(amountIn.toString())
         .toString(),
     };
+  }
+
+  async estimateProfitability(amountDiff: string) {
+    if (Big(amountDiff).gt(0)) return true;
+    return false;
+  }
+
+  choosePath(
+    forwardAmountDiff: string,
+    backwardAmountDiff: string
+  ): "forward" | "backward" | undefined {
+    if (
+      Big(forwardAmountDiff).gt(backwardAmountDiff) &&
+      Big(forwardAmountDiff).gt(0)
+    ) {
+      return "forward";
+    } else if (
+      Big(backwardAmountDiff).gt(forwardAmountDiff) &&
+      Big(backwardAmountDiff).gt(0)
+    ) {
+      return "backward";
+    }
+    return undefined;
   }
 
   private async logProfitability(
