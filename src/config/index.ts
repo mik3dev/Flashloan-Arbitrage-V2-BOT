@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isBoolean, isEthereumAddress, isNumeric } from "validator";
+import { isEthereumAddress } from "validator";
 
 const envVars = z.object({
   WEBSOCKET_PROVIDER_URL: z.string().url(),
