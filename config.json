@@ -1,0 +1,92 @@
+{
+  "name": "USDC-WETH:UNISWAP_V2-PANCAKESWAP_V2",
+  "description": "USDC-WETH:UNISWAP_V2-PANCAKESWAP_V2",
+  "defaultToken": {
+    "symbol": "USDC",
+    "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    "decimal": 6
+  },
+  "forward": [
+    {
+      "path": [
+        {
+          "dex": {
+            "name": "UNISWAP_V2",
+            "factory": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
+            "router": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
+            "pair": "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc"
+          },
+          "tokenIn": {
+            "symbol": "USDC",
+            "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+            "decimal": 6
+          },
+          "tokenOut": {
+            "symbol": "WETH",
+            "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+            "decimal": 18
+          }
+        },
+        {
+          "dex": {
+            "name": "PANCAKESWAP_V2",
+            "factory": "0x1097053Fd2ea711dad45caCcc45EfF7548fCB362",
+            "router": "0xEfF92A263d31888d860bD50809A8D171709b7b1c",
+            "pair": "0x2E8135bE71230c6B1B4045696d41C09Db0414226"
+          },
+          "tokenIn": {
+            "symbol": "WETH",
+            "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+            "decimal": 18
+          },
+          "tokenOut": {
+            "symbol": "USDC",
+            "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+            "decimal": 6
+          }
+        }
+      ]
+    }
+  ],
+  "backward": [
+    {
+      "path": [
+        {
+          "dex": {
+            "name": "PANCAKESWAP_V2",
+            "factory": "0x1097053Fd2ea711dad45caCcc45EfF7548fCB362",
+            "router": "0xEfF92A263d31888d860bD50809A8D171709b7b1c",
+            "pair": "0x2E8135bE71230c6B1B4045696d41C09Db0414226"
+          },
+          "tokenIn": {
+            "symbol": "USDC",
+            "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+            "decimal": 6
+          },
+          "tokenOut": {
+            "symbol": "WETH",
+            "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+            "decimal": 18
+          }
+        },
+        {
+          "dex": {
+            "name": "UNISWAP_V2",
+            "factory": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
+            "router": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
+          },
+          "tokenIn": {
+            "symbol": "WETH",
+            "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+            "decimal": 18
+          },
+          "tokenOut": {
+            "symbol": "USDC",
+            "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+            "decimal": 6
+          }
+        }
+      ]
+    }
+  ]
+}
