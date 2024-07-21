@@ -1,11 +1,20 @@
 import IUniswapV2Factory from "@uniswap/v2-core/build/IUniswapV2Factory.json";
 import IUniswapV2Pair from "@uniswap/v2-core/build/IUniswapV2Pair.json";
 import IUniswapV2Router02 from "@uniswap/v2-periphery/build/IUniswapV2Router02.json";
+import ERC20 from "@openzeppelin/contracts/build/contracts/ERC20.json";
 
-import { Contract, Provider, WebSocketProvider } from "ethers";
+import {
+  Contract,
+  formatUnits,
+  parseUnits,
+  Provider,
+  Wallet,
+  WebSocketProvider,
+} from "ethers";
 
 import { FlashSwapUniswapV2 } from "./flashswap-uniswap-v2";
 import { DefaultToken, IBotConfiguration, Path } from "../types";
+import Big from "big.js";
 
 export class Bot {
   private readonly _provider: Provider;
@@ -13,6 +22,9 @@ export class Bot {
   private defaultToken: DefaultToken | undefined;
   private forwardPath: Path[] = [];
   private backwardPath: Path[] = [];
+  private _wallet: Wallet;
+  private _gasLimit = 400000;
+  private _gasPrice = 0.000000006;
 
   constructor(
     _privateKey: string,
@@ -26,6 +38,7 @@ export class Bot {
       _wsProviderURL
     );
     this._flashSwapUniswapV2.startListening();
+    this._wallet = new Wallet(_privateKey, this._provider);
   }
 
   async initialize(configuration: IBotConfiguration) {
@@ -33,7 +46,14 @@ export class Bot {
     console.log("Initializing bot...");
     console.log("Bot name: ", configuration.name);
     console.log("Bot description: ", configuration.description);
+    this._gasLimit = configuration.gasLimit;
+    this._gasPrice = configuration.gasPrice;
     this.defaultToken = configuration.defaultToken;
+    this.defaultToken.defaultAmountIn = parseUnits(
+      configuration.defaultToken.defaultAmountIn,
+      this.defaultToken.decimal
+    ).toString();
+
     for (const path of configuration.forward) {
       path.dex.factoryContract = this._fetchFactoryContract(path.dex.factory);
       path.dex.routerContract = this._fetchRouterContract(path.dex.router);
@@ -43,6 +63,7 @@ export class Bot {
         path.tokenOut.address
       );
     }
+
     for (const path of configuration.backward) {
       path.dex.factoryContract = this._fetchFactoryContract(path.dex.factory);
       path.dex.routerContract = this._fetchRouterContract(path.dex.router);
@@ -54,11 +75,6 @@ export class Bot {
     }
     this.backwardPath = configuration.backward;
     this.forwardPath = configuration.forward;
-    console.log("Forward path:");
-    console.log(this.forwardPath);
-    console.log();
-    console.log("Backward path:");
-    console.log(this.backwardPath);
     console.log("Bot initialized!");
     console.log();
   }
@@ -84,6 +100,90 @@ export class Bot {
   }
 
   private _fetchRouterContract(pairAddr: string) {
-    return new Contract(pairAddr, IUniswapV2Pair.abi, this._provider);
+    return new Contract(pairAddr, IUniswapV2Router02.abi, this._provider);
+  }
+
+  async estimateForwardPathProfitability() {
+    console.log();
+    console.log("Estimating FORWARD path profitability...");
+    const amountIn = this.defaultToken!.defaultAmountIn;
+
+    let prevAmountIn = this.defaultToken!.defaultAmountIn;
+    for (const path of this.forwardPath) {
+      const tokenPath = [path.tokenIn.address, path.tokenOut.address];
+      const [_amountIn, _amountOut] =
+        await path.dex.routerContract!.getAmountsOut(prevAmountIn, tokenPath);
+      prevAmountIn = _amountOut;
+    }
+
+    const amountOut = prevAmountIn;
+    await this.logProfitability(
+      Big(amountIn).toString(),
+      Big(amountOut).toString(),
+      this.defaultToken!
+    );
+
+    return Big(amountOut.toString()).gt(amountIn.toString());
+  }
+
+  async estimateBackwardPathProfitability() {
+    console.log();
+    console.log("Estimating BACKWARD path profitability...");
+
+    const amountIn = this.defaultToken!.defaultAmountIn;
+
+    let prevAmountIn = this.defaultToken!.defaultAmountIn;
+    for (const path of this.backwardPath) {
+      const tokenPath = [path.tokenIn.address, path.tokenOut.address];
+      const [_amountIn, _amountOut] =
+        await path.dex.routerContract!.getAmountsOut(prevAmountIn, tokenPath);
+      prevAmountIn = _amountOut;
+    }
+
+    const amountOut = prevAmountIn;
+    await this.logProfitability(
+      Big(amountIn).toString(),
+      Big(amountOut).toString(),
+      this.defaultToken!
+    );
+
+    return Big(amountOut.toString()).gt(amountIn.toString());
+  }
+
+  private async logProfitability(
+    amountIn: string,
+    amountOut: string,
+    token: DefaultToken
+  ) {
+    const amountDiff = Big(amountOut).minus(amountIn).toString();
+    const estimatedGasCost = Big(this._gasLimit).times(this._gasPrice);
+    const ethBalance = await this._provider.getBalance(this._wallet.address);
+    const ethBalanceBefore = formatUnits(ethBalance, 18);
+    const ethBalanceAfter = new Big(ethBalanceBefore).minus(
+      estimatedGasCost.toString()
+    );
+    const tokenContract = new Contract(
+      token.address,
+      ERC20.abi,
+      this._provider
+    );
+    const tokenBalance = await tokenContract.balanceOf(this._wallet.address);
+    const tokenBalanceBefore = formatUnits(tokenBalance, token.decimal);
+    const tokenBalanceAfter = Big(amountDiff).plus(tokenBalance);
+
+    console.table({
+      "ETH Balance Before": ethBalanceBefore,
+      "ETH Balance After": ethBalanceAfter.toString(),
+      "ETH Spent (gas)": estimatedGasCost.toString(),
+      "": {},
+      "Token amount in": formatUnits(amountIn.toString(), token.decimal),
+      "Token amount out": formatUnits(amountOut.toString(), token.decimal),
+      "Token Gained/Lost": formatUnits(amountDiff.toString(), token.decimal),
+      "Token Balance Before": tokenBalanceBefore,
+      "Token Balance After": formatUnits(
+        tokenBalanceAfter.toString(),
+        token.decimal
+      ),
+    });
   }
 }

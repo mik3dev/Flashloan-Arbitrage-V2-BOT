@@ -1,12 +1,14 @@
 {
   "name": "USDC-WETH:UNISWAP_V2-PANCAKESWAP_V2",
-  "description": "Bot to trade (arbitrage) USDC-WETH-USDC - UniswapV2 <- * -> Pancakeswap_V2",
+  "description": "Bot to trade (arbitrage) USDC-WETH-USDC - UniswapV2 | Pancakeswap_V2",
   "defaultToken": {
     "symbol": "USDC",
     "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
     "decimal": 6,
     "defaultAmountIn": "10000"
   },
+  "gasLimit": 350000,
+  "gasPrice": 0.000000006,
   "forward": [
     {
       "dex": {

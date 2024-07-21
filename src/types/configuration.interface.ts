@@ -33,6 +33,8 @@ export interface IBotConfiguration {
   name: string;
   description: string;
   defaultToken: DefaultToken;
+  gasLimit: number;
+  gasPrice: number;
   forward: Path[];
   backward: Path[];
 }
