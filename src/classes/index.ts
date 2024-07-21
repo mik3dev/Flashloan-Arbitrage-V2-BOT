@@ -1,2 +1,2 @@
 export * from "./flashswap-uniswap-v2";
-export * from "./bot";
+export * from "./flashswap-uniswap-v2-bot";

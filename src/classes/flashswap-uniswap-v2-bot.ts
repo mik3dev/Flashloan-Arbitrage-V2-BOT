@@ -16,7 +16,7 @@ import { FlashSwapUniswapV2 } from "./flashswap-uniswap-v2";
 import { DefaultToken, IBotConfiguration, Path } from "../types";
 import Big from "big.js";
 
-export class Bot {
+export class FlashSwapUniswapV2Bot {
   private readonly _provider: Provider;
   private readonly _flashSwapUniswapV2: FlashSwapUniswapV2;
   private defaultToken: DefaultToken | undefined;
@@ -103,17 +103,41 @@ export class Bot {
     return new Contract(pairAddr, IUniswapV2Router02.abi, this._provider);
   }
 
-  async estimateForwardPathProfitability() {
+  async calculateForwardPath() {
     console.log();
     console.log("Estimating FORWARD path profitability...");
     const amountIn = this.defaultToken!.defaultAmountIn;
 
     let prevAmountIn = this.defaultToken!.defaultAmountIn;
+    let i = 0;
     for (const path of this.forwardPath) {
+      if (
+        i + 1 < this.forwardPath.length &&
+        path.dex.name === this.forwardPath[i + 1].dex.name
+      ) {
+        const tokenPath = [
+          path.tokenIn.address,
+          path.tokenOut.address,
+          this.forwardPath[i + 1].tokenOut.address,
+        ];
+        console.log(tokenPath);
+        const [_amountIn, _amountOut] =
+          await path.dex.routerContract!.getAmountsOut(prevAmountIn, tokenPath);
+        prevAmountIn = _amountOut;
+        i++;
+        continue;
+      } else if (
+        i !== 0 &&
+        path.dex.name === this.forwardPath[i - 1].dex.name
+      ) {
+        i++;
+        continue;
+      }
       const tokenPath = [path.tokenIn.address, path.tokenOut.address];
       const [_amountIn, _amountOut] =
         await path.dex.routerContract!.getAmountsOut(prevAmountIn, tokenPath);
       prevAmountIn = _amountOut;
+      i++;
     }
 
     const amountOut = prevAmountIn;
@@ -123,21 +147,56 @@ export class Bot {
       this.defaultToken!
     );
 
-    return Big(amountOut.toString()).gt(amountIn.toString());
+    return {
+      amountIn: Big(amountIn.toString()).toString(),
+      amountOut: Big(amountOut.toString()).toString(),
+      amountDiff: Big(amountOut.toString())
+        .minus(amountIn.toString())
+        .toString(),
+    };
   }
 
-  async estimateBackwardPathProfitability() {
+  async estimateProfitability(amountDiff: string) {
+    if (Big(amountDiff).gt(0)) return true;
+    return false;
+  }
+
+  async calculateBackwardPath() {
     console.log();
     console.log("Estimating BACKWARD path profitability...");
 
     const amountIn = this.defaultToken!.defaultAmountIn;
 
     let prevAmountIn = this.defaultToken!.defaultAmountIn;
+    let i = 0;
     for (const path of this.backwardPath) {
+      if (
+        i + 1 < this.backwardPath.length &&
+        path.dex.name === this.backwardPath[i + 1].dex.name
+      ) {
+        const tokenPath = [
+          path.tokenIn.address,
+          path.tokenOut.address,
+          this.backwardPath[i + 1].tokenOut.address,
+        ];
+        console.log(tokenPath);
+        const [_amountIn, _amountOut] =
+          await path.dex.routerContract!.getAmountsOut(prevAmountIn, tokenPath);
+        prevAmountIn = _amountOut;
+        i++;
+        continue;
+      } else if (
+        i !== 0 &&
+        path.dex.name === this.backwardPath[i - 1].dex.name
+      ) {
+        i++;
+        continue;
+      }
       const tokenPath = [path.tokenIn.address, path.tokenOut.address];
       const [_amountIn, _amountOut] =
         await path.dex.routerContract!.getAmountsOut(prevAmountIn, tokenPath);
       prevAmountIn = _amountOut;
+      i++;
     }
 
     const amountOut = prevAmountIn;
@@ -147,7 +206,13 @@ export class Bot {
       this.defaultToken!
     );
 
-    return Big(amountOut.toString()).gt(amountIn.toString());
+    return {
+      amountIn: Big(amountIn.toString()).toString(),
+      amountOut: Big(amountOut.toString()).toString(),
+      amountDiff: Big(amountOut.toString())
+        .minus(amountIn.toString())
+        .toString(),
+    };
   }
 
   private async logProfitability(
