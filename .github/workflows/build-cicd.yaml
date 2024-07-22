@@ -35,7 +35,7 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           flavor: latest=true
-          tags: type=sha,prefix=-
+          tags: type=sha,prefix=
 
       - name: Build and push
         id: image
