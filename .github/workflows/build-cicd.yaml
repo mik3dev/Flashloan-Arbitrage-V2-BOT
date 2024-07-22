@@ -35,7 +35,18 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           flavor: latest=true
-          tags: type=sha,prefix=
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=ref,event=pr
+            type=raw,value={{ matrix.platform }}
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
         id: image
