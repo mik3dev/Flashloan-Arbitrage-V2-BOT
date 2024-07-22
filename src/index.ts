@@ -64,16 +64,46 @@ const main = async () => {
           forwardEstimation.amountDiff,
           backwardEstimation.amountDiff
         );
+
+        const {
+          ethBalance: ethBalanceBefore,
+          tokenBalance: tokenBalanceBefore,
+        } = await flashSwapUniswapV2Bot.getBalances();
+
+        console.log();
         if (bestPath === "forward") {
           console.log("Forward path is profitable!");
+          if (isTradeActive === "true") {
+            const tx = await flashSwapUniswapV2Bot.executeForwardPath();
+            if (!tx) console.log("\x1b[41Trade reverted!\x1b[0m");
+          } else {
+            console.log("\x1b[41mTrade not active!\x1b[0m");
+          }
         } else if (bestPath === "backward") {
           console.log("Backward path is profitable!");
+          if (isTradeActive === "true") {
+            const tx = await flashSwapUniswapV2Bot.executeBackwardPath();
+            if (!tx) console.log("\x1b[41Trade reverted!\x1b[0m");
+          } else {
+            console.log("\x1b[41mTrade not active!\x1b[0m");
+          }
         } else {
           console.log();
           console.log("\x1b[41mNo profitable opportunity found!\x1b[0m");
           console.log();
         }
 
+        const { ethBalance: ethBalanceAfter, tokenBalance: tokenBalanceAfter } =
+          await flashSwapUniswapV2Bot.getBalances();
+
+        flashSwapUniswapV2Bot.logProfitReport({
+          ethBalanceBefore: ethBalanceBefore.toString(),
+          ethBalanceAfter: ethBalanceAfter.toString(),
+          tokenBalanceAfter,
+          tokenBalanceBefore,
+        });
+
+        console.log("---");
         isExecuting = false;
       }
     );

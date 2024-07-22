@@ -69,12 +69,10 @@ export class FlashSwapUniswapV2 {
         tokens,
         routers
       );
-      await tx.wait();
       console.log(
-        `${
-          new Date().toLocaleDateString
-        } ${new Date().toLocaleTimeString()} - Transaction: `,
-        tx.hash
+        `${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()} - Transaction: ${
+          tx.hash
+        }`
       );
       console.log();
       return tx;

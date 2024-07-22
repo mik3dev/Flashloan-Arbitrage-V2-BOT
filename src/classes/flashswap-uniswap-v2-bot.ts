@@ -5,7 +5,9 @@ import ERC20 from "@openzeppelin/contracts/build/contracts/ERC20.json";
 
 import {
   Contract,
+  formatEther,
   formatUnits,
+  parseEther,
   parseUnits,
   Provider,
   Wallet,
@@ -37,7 +39,7 @@ export class FlashSwapUniswapV2Bot {
       _privateKey,
       _wsProviderURL
     );
-    this._flashSwapUniswapV2.startListening();
+    // this._flashSwapUniswapV2.startListening();
     this._wallet = new Wallet(_privateKey, this._provider);
   }
 
@@ -109,7 +111,7 @@ export class FlashSwapUniswapV2Bot {
 
   async calculateForwardPath() {
     console.log();
-    console.log("Estimating FORWARD path profitability...");
+    console.log("Estimating \x1b[43mFORWARD\x1b[0m path profitability...");
     const amountIn = this.defaultToken!.defaultAmountIn;
 
     let prevAmountIn = this.defaultToken!.defaultAmountIn;
@@ -162,7 +164,7 @@ export class FlashSwapUniswapV2Bot {
 
   async calculateBackwardPath() {
     console.log();
-    console.log("Estimating BACKWARD path profitability...");
+    console.log("Estimating \x1b[43mBACKWARD\x1b[0m path profitability...");
 
     const amountIn = this.defaultToken!.defaultAmountIn;
 
@@ -237,6 +239,49 @@ export class FlashSwapUniswapV2Bot {
     return undefined;
   }
 
+  async executeForwardPath() {
+    console.log();
+    console.log("Preparing to execute \x1b[43mFORWARD TRADE\x1b[0m...");
+    const amountIn = this.defaultToken!.defaultAmountIn;
+    const tokens = this.forwardPath.map((path) => path.tokenIn.address);
+    const routers = this.forwardPath.map((path) => path.dex.router);
+    const tx = await this._flashSwapUniswapV2.requestFlashTrade(
+      amountIn,
+      tokens,
+      routers
+    );
+    return tx;
+  }
+
+  async executeBackwardPath() {
+    console.log();
+    console.log("Preparing to execute \x1b[43mBACKWARD TRADE\x1b[0m...");
+    const amountIn = this.defaultToken!.defaultAmountIn;
+    const tokens = this.backwardPath.map((path) => path.tokenIn.address);
+    const routers = this.backwardPath.map((path) => path.dex.router);
+    const tx = await this._flashSwapUniswapV2.requestFlashTrade(
+      amountIn,
+      tokens,
+      routers
+    );
+    return tx;
+  }
+
+  async getEthBalance() {
+    return await this._provider.getBalance(this._wallet.address);
+  }
+
+  async getTokenBalance(token: string) {
+    const tokenContract = new Contract(token, ERC20.abi, this._provider);
+    return await tokenContract.balanceOf(this._wallet.address);
+  }
+
+  async getBalances() {
+    const ethBalance = await this.getEthBalance();
+    const tokenBalance = await this.getTokenBalance(this.defaultToken!.address);
+    return { ethBalance, tokenBalance };
+  }
+
   private async logProfitability(
     amountIn: string,
     amountOut: string,
@@ -270,6 +315,32 @@ export class FlashSwapUniswapV2Bot {
       "Token Balance After": formatUnits(
         tokenBalanceAfter.toString(),
         token.decimal
+      ),
+    });
+  }
+
+  logProfitReport({
+    ethBalanceBefore,
+    ethBalanceAfter,
+    tokenBalanceAfter,
+    tokenBalanceBefore,
+  }: {
+    ethBalanceBefore: string;
+    ethBalanceAfter: string;
+    tokenBalanceBefore: string;
+    tokenBalanceAfter: string;
+  }) {
+    console.table({
+      "ETH Balance Before": formatEther(ethBalanceBefore),
+      "ETH Balance After": formatEther(ethBalanceAfter),
+      "-": {},
+      [`${this.defaultToken!.symbol} Balance Before`]: formatUnits(
+        tokenBalanceBefore,
+        this.defaultToken!.decimal
+      ),
+      [`${this.defaultToken!.symbol} Balance After`]: formatUnits(
+        tokenBalanceAfter,
+        this.defaultToken!.decimal
       ),
     });
   }
