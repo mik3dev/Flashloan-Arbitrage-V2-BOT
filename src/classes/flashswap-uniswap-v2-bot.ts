@@ -126,10 +126,11 @@ export class FlashSwapUniswapV2Bot {
           path.tokenOut.address,
           this.forwardPath[i + 1].tokenOut.address,
         ];
-        console.log(tokenPath);
-        const [_amountIn, _amountOut] =
-          await path.dex.routerContract!.getAmountsOut(prevAmountIn, tokenPath);
-        prevAmountIn = _amountOut;
+        const result = await path.dex.routerContract!.getAmountsOut(
+          prevAmountIn,
+          tokenPath
+        );
+        prevAmountIn = result[result.length - 1];
         i++;
         continue;
       } else if (
@@ -180,10 +181,11 @@ export class FlashSwapUniswapV2Bot {
           path.tokenOut.address,
           this.backwardPath[i + 1].tokenOut.address,
         ];
-        console.log(tokenPath);
-        const [_amountIn, _amountOut] =
-          await path.dex.routerContract!.getAmountsOut(prevAmountIn, tokenPath);
-        prevAmountIn = _amountOut;
+        const result = await path.dex.routerContract!.getAmountsOut(
+          prevAmountIn,
+          tokenPath
+        );
+        prevAmountIn = result[result.length - 1];
         i++;
         continue;
       } else if (
@@ -340,6 +342,12 @@ export class FlashSwapUniswapV2Bot {
       ),
       [`${this.defaultToken!.symbol} Balance After`]: formatUnits(
         tokenBalanceAfter,
+        this.defaultToken!.decimal
+      ),
+      [`${this.defaultToken!.symbol} Profit`]: formatUnits(
+        Big(tokenBalanceAfter.toString())
+          .minus(tokenBalanceBefore.toString())
+          .toString(),
         this.defaultToken!.decimal
       ),
     });

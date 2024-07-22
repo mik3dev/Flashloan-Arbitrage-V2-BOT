@@ -31,6 +31,10 @@ const main = async () => {
     const token1 = getTokenName(await pairContract.token1());
     const dexName = getDexName(await pairContract.getAddress());
 
+    console.log(
+      "Start to listen swap events from pair contract: ",
+      await pairContract.getAddress()
+    );
     pairContract.on(
       "Swap",
       async (sender, amount0In, amount1In, amount0Out, amount1Out, to) => {
