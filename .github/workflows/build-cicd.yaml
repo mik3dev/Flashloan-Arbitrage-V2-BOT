@@ -37,8 +37,6 @@ jobs:
           flavor: latest=true
           tags: |
             type=sha,prefix=
-            type=ref,event=branch
-            type=ref,event=pr
             type=raw,value={{ matrix.platform }}
 
       - name: Login to DockerHub
@@ -46,7 +44,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GHCR_TOKEN }}
 
       - name: Build and push
         id: image
