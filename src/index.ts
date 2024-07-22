@@ -1,8 +1,9 @@
 import "dotenv/config";
 import "./config";
+import { Contract } from "ethers";
+
 import { FlashSwapUniswapV2Bot } from "./classes";
 import config from "../config.json";
-import { Contract } from "ethers";
 import {
   getDexName,
   getTokenName,

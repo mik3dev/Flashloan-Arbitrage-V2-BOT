@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node src/index.ts",
-    "build": "tsc",
+    "prebuild": "rimraf dist",
+    "build": "npm run prebuild && tsc",
     "dev": "nodemon",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -26,6 +27,7 @@
     "big.js": "^6.2.1",
     "dotenv": "^16.4.5",
     "ethers": "^6.13.1",
+    "rimraf": "^6.0.1",
     "validator": "^13.12.0",
     "zod": "^3.23.8"
   }
