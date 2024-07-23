@@ -80,7 +80,19 @@ const main = async () => {
           console.log("Forward path is profitable!");
           if (isTradeActive === "true") {
             const tx = await flashSwapUniswapV2Bot.executeForwardPath();
-            if (!tx) console.log("\x1b[41Trade reverted!\x1b[0m");
+            if (tx) {
+              const { tokenBalance: tokenBalanceAfter } =
+                await flashSwapUniswapV2Bot.getBalances();
+              await flashSwapUniswapV2Bot.sendSuccessfullMessage(
+                "forward",
+                tx,
+                tokenBalanceBefore,
+                tokenBalanceAfter
+              );
+            } else {
+              console.log("\x1b[41Trade reverted!\x1b[0m");
+              flashSwapUniswapV2Bot.sendFailedMessage("forward");
+            }
           } else {
             console.log("\x1b[41mTrade not active!\x1b[0m");
           }
@@ -88,7 +100,19 @@ const main = async () => {
           console.log("Backward path is profitable!");
           if (isTradeActive === "true") {
             const tx = await flashSwapUniswapV2Bot.executeBackwardPath();
-            if (!tx) console.log("\x1b[41Trade reverted!\x1b[0m");
+            if (tx) {
+              const { tokenBalance: tokenBalanceAfter } =
+                await flashSwapUniswapV2Bot.getBalances();
+              await flashSwapUniswapV2Bot.sendSuccessfullMessage(
+                "backward",
+                tx,
+                tokenBalanceBefore,
+                tokenBalanceAfter
+              );
+            } else {
+              console.log("\x1b[41Trade reverted!\x1b[0m");
+              flashSwapUniswapV2Bot.sendFailedMessage("backward");
+            }
           } else {
             console.log("\x1b[41mTrade not active!\x1b[0m");
           }

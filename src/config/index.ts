@@ -7,6 +7,8 @@ const envVars = z.object({
   FLASHBOT_V2_ADDRESS: z.string().refine((val) => isEthereumAddress(val)),
   PRIVATE_KEY: z.string(),
   IS_TRADE_ACTIVE: z.string().refine((val) => isBoolean(val)),
+  TELEGRAM_BOT_TOKEN: z.string(),
+  TELEGRAM_CHAT_ID: z.string(),
   CHAIN: z
     .string()
     .refine((val) =>

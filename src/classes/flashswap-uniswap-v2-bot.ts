@@ -7,7 +7,6 @@ import {
   Contract,
   formatEther,
   formatUnits,
-  parseEther,
   parseUnits,
   Provider,
   Wallet,
@@ -17,6 +16,7 @@ import {
 import { FlashSwapUniswapV2 } from "./flashswap-uniswap-v2";
 import { DefaultToken, IBotConfiguration, Path } from "../types";
 import Big from "big.js";
+import { sendErrorMessage, sendSuccessfullMessage } from "../helpers/index";
 
 export class FlashSwapUniswapV2Bot {
   private readonly _provider: Provider;
@@ -351,5 +351,45 @@ export class FlashSwapUniswapV2Bot {
         this.defaultToken!.decimal
       ),
     });
+  }
+
+  async sendSuccessfullMessage(
+    pathString: "forward" | "backward",
+    tx: string,
+    tokenBalanceBefore: string,
+    tokenBalanceAfter: string
+  ) {
+    const amount = Big(tokenBalanceAfter.toString())
+      .minus(tokenBalanceBefore.toString())
+      .toString();
+    let path: string[] = [];
+    if (pathString === "forward") {
+      path = this.forwardPath.map(
+        (path) =>
+          `[${path.dex.name}}]:${path.tokenIn.symbol}->${path.tokenOut.symbol}`
+      );
+    } else {
+      path = this.backwardPath.map(
+        (path) =>
+          `[${path.dex.name}}]:${path.tokenIn.symbol}->${path.tokenOut.symbol}`
+      );
+    }
+    sendSuccessfullMessage(path, this.defaultToken!, amount, tx);
+  }
+
+  async sendFailedMessage(pathString: "forward" | "backward") {
+    let path: string[] = [];
+    if (pathString === "forward") {
+      path = this.forwardPath.map(
+        (path) =>
+          `[${path.dex.name}}]:${path.tokenIn.symbol}->${path.tokenOut.symbol}`
+      );
+    } else {
+      path = this.backwardPath.map(
+        (path) =>
+          `[${path.dex.name}}]:${path.tokenIn.symbol}->${path.tokenOut.symbol}`
+      );
+    }
+    sendErrorMessage(path);
   }
 }

@@ -1,5 +1,7 @@
+import { formatUnits } from "ethers";
 import configuration from "../../config.json";
 import { Token } from "../types";
+import TelegramBot from "node-telegram-bot-api";
 
 export const printInitialMessage = () => {
   console.log(`
@@ -92,4 +94,47 @@ export const getDexName = (pairAddr: string) => {
     return dex ? dex.dex.name : "UNKNOWN";
   }
   return dex.dex.name;
+};
+
+export const sendSuccessfullMessage = async (
+  tokenPath: string[],
+  defaultToken: Token,
+  amount: string,
+  hash: string
+) => {
+  const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {
+    polling: true,
+  });
+
+  bot.sendMessage(
+    process.env.TELEGRAM_CHAT_ID,
+    `🎉 Successfull trade executed! 🎉
+
+    **${new Date().toLocaleString()}**
+    **${tokenPath.join(" > ")}**
+    
+    ${defaultToken.symbol} Profit Amount: ${formatUnits(
+      amount,
+      defaultToken.decimal
+    )}
+    Tx: ${hash}
+    `,
+    { parse_mode: "Markdown" }
+  );
+};
+
+export const sendErrorMessage = async (tokenPath: string[]) => {
+  const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {
+    polling: true,
+  });
+
+  bot.sendMessage(
+    process.env.TELEGRAM_CHAT_ID,
+    `❌ Error on trade executed! ❌
+
+    **${new Date().toLocaleString()}**
+    **${tokenPath.join(" > ")}**
+    `,
+    { parse_mode: "Markdown" }
+  );
 };
